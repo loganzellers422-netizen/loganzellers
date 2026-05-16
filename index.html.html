@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logan Zellers — AI Automations for Shopify Stores</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #080808;
+    --white: #f5f2ee;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --gray: #1a1a1a;
+    --gray2: #2a2a2a;
+    --text-muted: #888;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    width: 40px; height: 40px;
+    border: 1px solid rgba(232,255,71,0.4);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transition: all 0.08s ease;
+    mix-blend-mode: difference;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 48px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--white);
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-cta {
+    background: var(--accent);
+    color: var(--black);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    padding: 12px 24px;
+    border: none;
+    cursor: none;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .nav-cta:hover { background: var(--accent2); color: var(--white); transform: translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 48px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,71,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,71,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .hero-noise {
+    position: absolute; inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(232,255,71,0.08) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    pointer-events: none;
+  }
+  .hero-tag {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.2s forwards;
+  }
+  .hero-headline {
+    font-family: var(--font-display);
+    font-size: clamp(72px, 10vw, 140px);
+    line-height: 0.92;
+    letter-spacing: 1px;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.4s forwards;
+  }
+  .hero-headline .line2 { color: var(--accent); }
+  .hero-headline .line3 { 
+    -webkit-text-stroke: 1px var(--white);
+    color: transparent;
+  }
+  .hero-sub {
+    font-size: 18px;
+    font-weight: 300;
+    color: rgba(245,242,238,0.65);
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.6s forwards;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.8s forwards;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--black);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 18px 40px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    cursor: none;
+  }
+  .btn-primary:hover { background: var(--accent2); color: var(--white); transform: translateY(-2px); }
+  .btn-secondary {
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    cursor: none;
+  }
+  .btn-secondary:hover { opacity: 1; }
+  .hero-stats {
+    position: absolute;
+    right: 48px; bottom: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1s forwards;
+  }
+  .stat { text-align: right; }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 52px;
+    line-height: 1;
+    color: var(--accent);
+  }
+  .stat-label {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+
+  /* MARQUEE */
+  .marquee-section {
+    border-top: 1px solid var(--gray2);
+    border-bottom: 1px solid var(--gray2);
+    padding: 16px 0;
+    overflow: hidden;
+    background: var(--gray);
+  }
+  .marquee-track {
+    display: flex;
+    gap: 48px;
+    animation: marquee 20s linear infinite;
+    white-space: nowrap;
+  }
+  .marquee-item {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .marquee-item span { color: var(--accent); margin-right: 48px; }
+
+  /* PROBLEM SECTION */
+  .problem {
+    padding: 120px 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .problem-headline {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 6vw, 80px);
+    line-height: 1;
+    margin-bottom: 64px;
+  }
+  .problem-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+  .problem-card {
+    background: var(--gray);
+    padding: 40px 32px;
+    border-top: 2px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+  .problem-card:hover { border-color: var(--accent); }
+  .problem-icon {
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  .problem-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .problem-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  /* SERVICES */
+  .services {
+    padding: 120px 48px;
+    background: var(--gray);
+  }
+  .services-inner { max-width: 1100px; margin: 0 auto; }
+  .services-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 64px;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .services-headline {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 6vw, 80px);
+    line-height: 1;
+  }
+  .services-sub {
+    max-width: 320px;
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    text-align: right;
+  }
+  .service-item {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    align-items: center;
+    gap: 32px;
+    padding: 32px 0;
+    border-bottom: 1px solid var(--gray2);
+    transition: all 0.3s ease;
+    cursor: none;
+  }
+  .service-item:first-of-type { border-top: 1px solid var(--gray2); }
+  .service-item:hover .service-name { color: var(--accent); }
+  .service-item:hover .service-arrow { transform: translateX(8px); color: var(--accent); }
+  .service-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .service-content { }
+  .service-name {
+    font-family: var(--font-display);
+    font-size: 36px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    transition: color 0.3s;
+  }
+  .service-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .service-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    background: rgba(232,255,71,0.08);
+    padding: 6px 14px;
+    white-space: nowrap;
+  }
+  .service-arrow {
+    font-size: 24px;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    margin-left: 16px;
+  }
+
+  /* HOW IT WORKS */
+  .how {
+    padding: 120px 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .how-headline {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 6vw, 80px);
+    line-height: 1;
+    margin-bottom: 80px;
+  }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    position: relative;
+  }
+  .step-card {
+    background: var(--gray);
+    padding: 40px 28px;
+    position: relative;
+  }
+  .step-number {
+    font-family: var(--font-display);
+    font-size: 80px;
+    color: rgba(232,255,71,0.1);
+    line-height: 1;
+    margin-bottom: 24px;
+  }
+  .step-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .step-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  /* RESULTS */
+  .results {
+    padding: 120px 48px;
+    background: var(--accent);
+    color: var(--black);
+  }
+  .results-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .results-headline {
+    font-family: var(--font-display);
+    font-size: clamp(52px, 7vw, 90px);
+    line-height: 0.95;
+    margin-bottom: 32px;
+  }
+  .results-sub {
+    font-size: 16px;
+    color: rgba(8,8,8,0.65);
+    line-height: 1.7;
+    margin-bottom: 40px;
+  }
+  .btn-dark {
+    background: var(--black);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 18px 40px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    cursor: none;
+  }
+  .btn-dark:hover { background: rgba(8,8,8,0.85); transform: translateY(-2px); }
+  .results-numbers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+  .result-card {
+    background: rgba(8,8,8,0.08);
+    padding: 40px 28px;
+  }
+  .result-num {
+    font-family: var(--font-display);
+    font-size: 64px;
+    line-height: 1;
+    color: var(--black);
+  }
+  .result-label {
+    font-size: 13px;
+    color: rgba(8,8,8,0.6);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  /* CTA SECTION */
+  .cta-section {
+    padding: 160px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-glow {
+    position: absolute;
+    width: 800px; height: 400px;
+    background: radial-gradient(ellipse, rgba(232,255,71,0.06) 0%, transparent 70%);
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .cta-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .cta-headline {
+    font-family: var(--font-display);
+    font-size: clamp(60px, 9vw, 120px);
+    line-height: 0.95;
+    margin-bottom: 32px;
+  }
+  .cta-sub {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 480px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+  }
+  .cta-note {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 20px;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 40px 48px;
+    border-top: 1px solid var(--gray2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-logo {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+  .footer-logo span { color: var(--accent); }
+  .footer-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* SCROLL REVEAL */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    nav { padding: 20px 24px; }
+    .hero { padding: 100px 24px 80px; }
+    .hero-stats { display: none; }
+    .problem { padding: 80px 24px; }
+    .problem-grid { grid-template-columns: 1fr; }
+    .services { padding: 80px 24px; }
+    .services-sub { text-align: left; }
+    .service-item { grid-template-columns: 40px 1fr; }
+    .service-tag, .service-arrow { display: none; }
+    .how { padding: 80px 24px; }
+    .steps-grid { grid-template-columns: 1fr 1fr; }
+    .results { padding: 80px 24px; }
+    .results-inner { grid-template-columns: 1fr; gap: 48px; }
+    .cta-section { padding: 100px 24px; }
+    footer { padding: 32px 24px; }
+    body { cursor: auto; }
+    .cursor, .cursor-ring { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">LOGAN<span>.</span>ZELLERS</div>
+  <a href="#book" class="nav-cta">Book a Free Call</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-noise"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-tag">// AI Automation Agency — Built for Shopify</div>
+  <h1 class="hero-headline">
+    <div>YOUR STORE</div>
+    <div class="line2">MAKES MONEY</div>
+    <div class="line3">WHILE YOU SLEEP</div>
+  </h1>
+  <p class="hero-sub">I build AI-powered automation systems for Shopify stores that recover abandoned carts, follow up with customers, and generate reviews — all running on autopilot, 24/7.</p>
+  <div class="hero-actions">
+    <a href="#book" class="btn-primary">Book a Free 15-Min Call →</a>
+    <a href="#services" class="btn-secondary">See what I build ↓</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">70%</div>
+      <div class="stat-label">of carts abandoned</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">15%</div>
+      <div class="stat-label">recovered on autopilot</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0</div>
+      <div class="stat-label">extra work for you</div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <div class="marquee-item"><span>→</span> Abandoned Cart Recovery</div>
+    <div class="marquee-item"><span>→</span> Post-Purchase Sequences</div>
+    <div class="marquee-item"><span>→</span> Review Request Automations</div>
+    <div class="marquee-item"><span>→</span> AI-Powered Email Flows</div>
+    <div class="marquee-item"><span>→</span> Customer Win-Back Campaigns</div>
+    <div class="marquee-item"><span>→</span> Abandoned Cart Recovery</div>
+    <div class="marquee-item"><span>→</span> Post-Purchase Sequences</div>
+    <div class="marquee-item"><span>→</span> Review Request Automations</div>
+    <div class="marquee-item"><span>→</span> AI-Powered Email Flows</div>
+    <div class="marquee-item"><span>→</span> Customer Win-Back Campaigns</div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem">
+  <div class="section-label">// The Problem</div>
+  <h2 class="problem-headline reveal">YOU'RE LEAVING MONEY ON THE TABLE EVERY SINGLE DAY</h2>
+  <div class="problem-grid">
+    <div class="problem-card reveal">
+      <div class="problem-icon">🛒</div>
+      <div class="problem-title">70% of carts get abandoned</div>
+      <div class="problem-desc">Most of those customers were ready to buy. They just needed a nudge. Without an automated sequence, that revenue disappears forever.</div>
+    </div>
+    <div class="problem-card reveal">
+      <div class="problem-icon">📭</div>
+      <div class="problem-title">No post-purchase follow-up</div>
+      <div class="problem-desc">You worked hard to get that first sale. But without automated follow-up, customers forget about you and never come back.</div>
+    </div>
+    <div class="problem-card reveal">
+      <div class="problem-icon">⭐</div>
+      <div class="problem-title">No review system in place</div>
+      <div class="problem-desc">Reviews drive 90% of purchase decisions. Most stores never ask for them. An automated request sent at the right time changes everything.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services" id="services">
+  <div class="services-inner">
+    <div class="services-header reveal">
+      <h2 class="services-headline">WHAT I<br>BUILD FOR<br>YOUR STORE</h2>
+      <p class="services-sub">Every automation is custom built for your store, tested, and handed to you running on autopilot.</p>
+    </div>
+    <div class="service-item reveal">
+      <div class="service-num">01</div>
+      <div class="service-content">
+        <div class="service-name">ABANDONED CART RECOVERY</div>
+        <div class="service-desc">A 3-email AI sequence that goes out automatically 1hr, 24hrs, and 72hrs after someone leaves your store without buying. Recovers 10-15% of lost sales.</div>
+      </div>
+      <div class="service-tag">Most Popular</div>
+      <div class="service-arrow">→</div>
+    </div>
+    <div class="service-item reveal">
+      <div class="service-num">02</div>
+      <div class="service-content">
+        <div class="service-name">POST-PURCHASE SEQUENCE</div>
+        <div class="service-desc">Automated thank-you emails, shipping updates, upsells, and check-ins that turn one-time buyers into repeat customers without you lifting a finger.</div>
+      </div>
+      <div class="service-tag">High LTV</div>
+      <div class="service-arrow">→</div>
+    </div>
+    <div class="service-item reveal">
+      <div class="service-num">03</div>
+      <div class="service-content">
+        <div class="service-name">REVIEW REQUEST AUTOMATION</div>
+        <div class="service-desc">Perfectly timed review request emails sent automatically after every purchase. More reviews, better social proof, higher conversions — all on autopilot.</div>
+      </div>
+      <div class="service-tag">Quick Win</div>
+      <div class="service-arrow">→</div>
+    </div>
+    <div class="service-item reveal">
+      <div class="service-num">04</div>
+      <div class="service-content">
+        <div class="service-name">CUSTOMER WIN-BACK CAMPAIGN</div>
+        <div class="service-desc">Automatically reach out to customers who haven't purchased in 60-90 days with a personalized offer that brings them back to your store.</div>
+      </div>
+      <div class="service-tag">Revenue Recovery</div>
+      <div class="service-arrow">→</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="section-label">// How It Works</div>
+  <h2 class="how-headline reveal">SIMPLE.<br>FAST. DONE.</h2>
+  <div class="steps-grid">
+    <div class="step-card reveal">
+      <div class="step-number">01</div>
+      <div class="step-title">Free Discovery Call</div>
+      <div class="step-desc">We jump on a 15-minute call. I look at your store, understand what you're losing, and tell you exactly what I'd build to fix it.</div>
+    </div>
+    <div class="step-card reveal">
+      <div class="step-number">02</div>
+      <div class="step-title">I Build Your System</div>
+      <div class="step-desc">I build your custom automation workflow using AI and connect it directly to your Shopify store. Usually done within a week.</div>
+    </div>
+    <div class="step-card reveal">
+      <div class="step-number">03</div>
+      <div class="step-title">We Test Everything</div>
+      <div class="step-desc">We run through every flow together to make sure it works perfectly before going live. Nothing launches until you're happy with it.</div>
+    </div>
+    <div class="step-card reveal">
+      <div class="step-number">04</div>
+      <div class="step-title">It Runs on Autopilot</div>
+      <div class="step-desc">Your automation goes live and starts working 24/7. You don't touch it. It just runs — recovering sales and following up with customers while you focus on your business.</div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="results">
+  <div class="results-inner">
+    <div class="reveal">
+      <h2 class="results-headline">REAL RESULTS FOR REAL STORES</h2>
+      <p class="results-sub">These are the numbers Shopify stores see when they have the right automations running. This is what I build.</p>
+      <a href="#book" class="btn-dark">Get These Results →</a>
+    </div>
+    <div class="results-numbers">
+      <div class="result-card reveal">
+        <div class="result-num">15%</div>
+        <div class="result-label">of abandoned carts recovered on average</div>
+      </div>
+      <div class="result-card reveal">
+        <div class="result-num">5+</div>
+        <div class="result-label">hours saved per week on manual follow-up</div>
+      </div>
+      <div class="result-card reveal">
+        <div class="result-num">3x</div>
+        <div class="result-label">more reviews generated automatically</div>
+      </div>
+      <div class="result-card reveal">
+        <div class="result-num">24/7</div>
+        <div class="result-label">your store works even when you don't</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="book">
+  <div class="cta-glow"></div>
+  <div class="cta-label">// Ready to Automate?</div>
+  <h2 class="cta-headline reveal">LET'S BUILD<br>YOUR SYSTEM</h2>
+  <p class="cta-sub">Book a free 15-minute call. I'll look at your store, tell you exactly what's costing you money, and show you how to fix it on autopilot.</p>
+  <!-- REPLACE THE HREF BELOW WITH YOUR CALENDLY LINK -->
+  <a href=https://calendly.com/loganzellers422/15-min-discovery-call class="btn-primary" style="font-size:17px; padding: 22px 56px;">Book Your Free Call →</a>
+  <div class="cta-note">No pitch. No pressure. Just a straight conversation about your store.</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">LOGAN<span>.</span>ZELLERS</div>
+  <div class="footer-text">AI AUTOMATION AGENCY — BUILT FOR SHOPIFY BRANDS</div>
+  <div class="footer-text">© 2026</div>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let ringX = 0, ringY = 0;
+
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX - 6 + 'px';
+    cursor.style.top = e.clientY - 6 + 'px';
+    setTimeout(() => {
+      ring.style.left = e.clientX - 20 + 'px';
+      ring.style.top = e.clientY - 20 + 'px';
+    }, 80);
+  });
+
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.style.transform = 'scale(2.5)');
+    el.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
